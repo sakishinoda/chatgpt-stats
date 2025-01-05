@@ -45,6 +45,30 @@ python -m src.chatgpt_stats.plot <ZIP_PATH> [--extract-to <EXTRACT_PATH>]
 - **`ZIP_PATH`** (required): Path to the ZIP file containing the ChatGPT export.
 - **`--extract-to`** (optional): Path to extract the `conversations.json` file. Default is `/tmp/conversations.json`.
 
+### How to Export Your ChatGPT Data
+
+To use this tool, you need to first export your ChatGPT data. Follow these steps:
+
+1. **Log in to ChatGPT**:
+   - Go to [chat.openai.com](https://chat.openai.com) and log in with your OpenAI account.
+
+2. **Navigate to Settings**:
+   - Click on your profile icon or the menu in the bottom-left corner.
+   - Select **Settings** from the menu.
+
+3. **Request Data Export**:
+   - In the settings panel, click **Data Controls** (or similar, depending on the UI).
+   - Find the **Export Data** option and click it.
+   - Confirm your request.
+
+4. **Wait for Email**:
+   - OpenAI will send an email with a link to download your data export. This may take a few minutes.
+
+5. **Download the ZIP File**:
+   - Click the download link in the email and save the ZIP file to your computer.
+
+You can now use this ZIP file as input to the **ChatGPT Stats** tool!
+
 ### Example
 
 ```bash
