@@ -37,7 +37,7 @@ This tool is designed to help users gain insights into their ChatGPT usage patte
 Run the tool from the command line:
 
 ```bash
-python -m src.chatgpt_stats.plot <ZIP_PATH> [--extract-to <EXTRACT_PATH>] [--log-file <LOG_PATH>]
+python -m src.chatgpt_stats.plot <ZIP_PATH> [--extract-to <EXTRACT_PATH>]
 ```
 
 ### Arguments
