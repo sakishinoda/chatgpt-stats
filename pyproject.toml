@@ -1,0 +1,29 @@
+[build-system]
+requires = ["flit"]
+build-backend = "flit.buildapi"
+
+[project]
+name = "chatgpt-stats"
+version = "0.1.0"
+description = "A Python utility for analyzing ChatGPT data exports and visualizing token usage trends."
+authors = [{name = "Saki Shinoda", email = "sakishinoda@pm.me"}]
+license = {file = "LICENSE.md"}
+readme = "README.md"
+requires-python = ">=3.8"
+keywords = ["ChatGPT", "data analysis", "visualization", "token usage"]
+homepage = "https://github.com/sakishinoda/chatgpt-stats"
+repository = "https://github.com/sakishinoda/chatgpt-stats"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent"
+]
+
+[project.dependencies]
+pandas = "*"
+matplotlib = "*"
+click = "*"
+loguru = "*"
+
+[project.scripts]
+chatgpt-stats = "chatgpt_stats.plot:main"
