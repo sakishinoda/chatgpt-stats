@@ -5,6 +5,8 @@ import json
 
 from loguru import logger
 
+from .pricing import COST_PER_TOKEN
+
 
 def extract_file_from_zip(zip_path: Path, file_to_extract: str, destination: Path):
     """
@@ -54,16 +56,21 @@ def extract_file_from_zip(zip_path: Path, file_to_extract: str, destination: Pat
         return Path(extracted_path)
 
 
-def extract_message_details(conversation, chars_per_token):
+def extract_message_details(
+    conversation: dict[str, Any],
+    chars_per_token: int,
+    cost_per_token: dict[str, dict[str, float]] = COST_PER_TOKEN,
+):
     """
-    Extracts message details from a conversation and returns a list of processed messages.
+    Extracts message details from a conversation, calculates the cost, and returns processed messages.
 
     Args:
         conversation (dict): The conversation data.
         chars_per_token (int): Approximation of characters per token.
+        cost_per_token (dict): Pricing dictionary for token costs.
 
     Returns:
-        list: A list of dictionaries containing message details.
+        list: A list of dictionaries containing message details and costs.
     """
     processed_messages = []
     mapping = conversation.get("mapping", {})
@@ -82,10 +89,20 @@ def extract_message_details(conversation, chars_per_token):
         if not role:
             continue
 
-        # Extract relevant details
-        num_tokens = len(content[0]) / chars_per_token
+        # Determine the model slug and pricing details
         metadata = message.get("metadata", {})
         model_slug = metadata.get("model_slug", "unknown_model")
+        model_key = model_slug.split("-")[1] if "-" in model_slug else model_slug
+        pricing = cost_per_token.get(model_key, {"input": 0, "output": 0})
+
+        # Calculate token count and cost
+        content_length = len(content[0])
+        num_tokens = content_length / chars_per_token
+        cost = (
+            pricing["input"] * num_tokens
+            if role == "user"
+            else pricing["output"] * num_tokens
+        )
 
         # Append processed message details
         processed_messages.append(
@@ -97,6 +114,7 @@ def extract_message_details(conversation, chars_per_token):
                 "content": content[0],
                 "num_tokens": num_tokens,
                 "model_slug": model_slug,
+                "cost": cost,
             }
         )
 
