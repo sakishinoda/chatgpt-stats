@@ -68,31 +68,35 @@ def extract_message_details(conversation, chars_per_token):
     processed_messages = []
     mapping = conversation.get("mapping", {})
 
-    for _message in mapping.values():
-        message = _message.get("message")
-
-        # Skip if the message structure is invalid
-        if not message or "content" not in message or "author" not in message:
+    for node in mapping.values():
+        # Extract the message object and validate its structure
+        message = node.get("message")
+        if not message:
             continue
 
-        role = message["author"].get("role", "unknown_role")
-        content_parts = message["content"].get("parts", [])
-
-        # Only process if there is non-empty content
-        if not content_parts:
+        content = message.get("content", {}).get("parts", [])
+        if not content:
             continue
 
-        content = content_parts[0]
-        num_tokens = len(content) / chars_per_token
+        role = message.get("author", {}).get("role")
+        if not role:
+            continue
 
+        # Extract relevant details
+        num_tokens = len(content[0]) / chars_per_token
+        metadata = message.get("metadata", {})
+        model_slug = metadata.get("model_slug", "unknown_model")
+
+        # Append processed message details
         processed_messages.append(
             {
                 "conv_id": conversation.get("id", "unknown_id"),
                 "msg_id": message.get("id", "unknown_msg_id"),
                 "create_time": conversation.get("create_time", 0),
                 "role": role,
-                "content": content,
+                "content": content[0],
                 "num_tokens": num_tokens,
+                "model_slug": model_slug,
             }
         )
 
