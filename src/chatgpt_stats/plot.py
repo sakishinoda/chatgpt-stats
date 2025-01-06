@@ -12,6 +12,7 @@ from .extract import process_zip
 def plot_data(all_messages):
     """
     Plots a stacked bar chart showing token counts by date and role, with enhanced formatting.
+    Annotates each bar with the total cost.
 
     Args:
         all_messages (list): List of dictionaries containing message details.
@@ -23,13 +24,19 @@ def plot_data(all_messages):
     # Convert timestamps to dates
     df["date"] = pd.to_datetime(df["create_time"], unit="s").dt.date
 
-    # Group data by date and role
+    # Calculate total cost per message
+    df["total_cost"] = df["cost"]
+
+    # Group data by date and role for plotting
     num_tokens_by_date_and_user = (
         df.groupby(["date", "role"])[["num_tokens"]]
         .sum()
         .reset_index()
         .pivot(columns="role", index="date", values="num_tokens")
     )
+
+    # Group data by date for total cost annotation
+    total_cost_by_date = df.groupby("date")["total_cost"].sum()
 
     # Generate a stacked bar chart
     logger.info("Generating stacked bar chart with enhanced formatting")
@@ -40,6 +47,19 @@ def plot_data(all_messages):
         alpha=0.85,
         title="Token Count by Date and Role",
     )
+
+    # Annotate bars with total cost
+    for i, (date, total_cost) in enumerate(total_cost_by_date.items()):
+        ax.annotate(
+            f"${total_cost:.2f}",
+            xy=(i, num_tokens_by_date_and_user.loc[date].sum()),
+            xytext=(0, 5),  # Offset above the bar
+            textcoords="offset points",
+            ha="center",
+            fontsize=10,
+            color="black",
+            weight="bold",
+        )
 
     # Add gridlines
     ax.yaxis.grid(True, which="major", linestyle="--", linewidth=0.7, alpha=0.7)
