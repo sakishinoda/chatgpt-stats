@@ -12,7 +12,7 @@ from .extract import process_zip
 def plot_data(all_messages):
     """
     Plots a stacked bar chart showing token counts by date and role, with enhanced formatting.
-    Annotates each bar with the total cost.
+    Annotates each bar with the total cost and includes the total cost in the title.
 
     Args:
         all_messages (list): List of dictionaries containing message details.
@@ -38,6 +38,9 @@ def plot_data(all_messages):
     # Group data by date for total cost annotation
     total_cost_by_date = df.groupby("date")["total_cost"].sum()
 
+    # Calculate the total cost across all days
+    total_cost_all_days = total_cost_by_date.sum()
+
     # Generate a stacked bar chart
     logger.info("Generating stacked bar chart with enhanced formatting")
     ax = num_tokens_by_date_and_user.plot(
@@ -45,7 +48,7 @@ def plot_data(all_messages):
         stacked=True,
         figsize=(12, 6),
         alpha=0.85,
-        title="Token Count by Date and Role",
+        title=f"Token Count by Date and Role (Total Cost: ${total_cost_all_days:.2f})",
     )
 
     # Annotate bars with total cost
