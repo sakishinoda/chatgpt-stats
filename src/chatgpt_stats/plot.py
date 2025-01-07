@@ -11,7 +11,8 @@ import click
 from .extract import process_zip
 
 
-def plot_data(all_messages, since: datetime.date = None):
+# TODO: make to_count an enum
+def plot_data(all_messages, to_count: str, since: datetime.date = None):
     """
     Plots a stacked bar chart showing token counts by date and role, with enhanced formatting.
     Annotates each bar with the total cost and includes the total cost in the title.
@@ -19,6 +20,7 @@ def plot_data(all_messages, since: datetime.date = None):
     Args:
         all_messages (list): List of dictionaries containing message details.
     """
+
     # Create a DataFrame
     logger.info("Creating DataFrame for plotting")
     df = pd.DataFrame(all_messages)
@@ -34,11 +36,18 @@ def plot_data(all_messages, since: datetime.date = None):
     df["total_cost"] = df["cost"]
 
     # Group data by date and role for plotting
-    num_tokens_by_date_and_user = (
-        df.groupby(["date", "role"])[["num_tokens"]]
-        .sum()
-        .reset_index()
-        .pivot(columns="role", index="date", values="num_tokens")
+
+    if to_count == "token":
+        col_name = "num_tokens"
+        count = df.groupby(["date", "role"])[[col_name]].sum()
+    elif to_count == "message":
+        col_name = "msg_id"
+        count = df.groupby(["date", "role"])[[col_name]].count()
+
+    else:
+        raise ValueError(f"Cannot count {to_count}s")
+    num_by_date_and_user = count.reset_index().pivot(
+        columns="role", index="date", values=col_name
     )
 
     # Group data by date for total cost annotation
@@ -49,19 +58,19 @@ def plot_data(all_messages, since: datetime.date = None):
 
     # Generate a stacked bar chart
     logger.info("Generating stacked bar chart with enhanced formatting")
-    ax = num_tokens_by_date_and_user.plot(
+    ax = num_by_date_and_user.plot(
         kind="bar",
         stacked=True,
         figsize=(12, 6),
         alpha=0.85,
-        title=f"Token Count by Date and Role (Total Cost: ${total_cost_all_days:.2f})",
+        title=f"{to_count.capitalize()} Count by Date and Role (Total Cost: ${total_cost_all_days:.2f})",
     )
 
     # Annotate bars with total cost
     for i, (date, total_cost) in enumerate(total_cost_by_date.items()):
         ax.annotate(
             f"${total_cost:.2f}",
-            xy=(i, num_tokens_by_date_and_user.loc[date].sum()),
+            xy=(i, num_by_date_and_user.loc[date].sum()),
             xytext=(0, 5),  # Offset above the bar
             textcoords="offset points",
             ha="center",
@@ -75,11 +84,14 @@ def plot_data(all_messages, since: datetime.date = None):
     ax.set_axisbelow(True)  # Ensure gridlines are behind the bars
 
     # Format y-axis labels in multiples of 1000
-    ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f"{int(x / 1000)}k"))
+    if to_count == "token":
+        ax.yaxis.set_major_formatter(
+            ticker.FuncFormatter(lambda x, _: f"{int(x / 1000)}k")
+        )
 
     # Set axis labels and legend
     ax.set_xlabel("Date")
-    ax.set_ylabel("Number of Tokens")
+    ax.set_ylabel(f"Number of {to_count.capitalize()}s")
     ax.legend(title="Role")
     plt.tight_layout()
     plt.show()
@@ -125,7 +137,13 @@ def parse_timedelta(arg):
     default=None,
     help="Show data since timedelta (days|weeks=*)",
 )
-def main(zip_path: Path, extract_to: Path, since: Optional[str]):
+@click.option(
+    "--to-count",
+    type=str,
+    default="token",
+    show_default=True,
+)
+def main(zip_path: Path, extract_to: Path, since: Optional[str], to_count: str):
     """
     Process a ZIP file and plot token counts.
 
@@ -149,7 +167,7 @@ def main(zip_path: Path, extract_to: Path, since: Optional[str]):
         all_messages = process_zip(zip_path, extract_to)
 
         # Plot the data
-        plot_data(all_messages, since=since)
+        plot_data(all_messages, to_count=to_count, since=since)
 
     except Exception as e:
         logger.error(f"An error occurred: {e}")

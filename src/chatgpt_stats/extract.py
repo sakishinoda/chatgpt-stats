@@ -76,6 +76,9 @@ def extract_message_details(
     processed_messages = []
     mapping = conversation.get("mapping", {})
 
+    # initialise model as 4o, since the conversations don't log the model until the first
+    # assistant response
+    model = "gpt-4o"
     for node in mapping.values():
         # Extract the message object and validate its structure
         message = node.get("message")
@@ -92,11 +95,8 @@ def extract_message_details(
 
         # Determine the model slug and pricing details
         metadata = message.get("metadata", {})
-        model_slug = metadata.get("model_slug", "unknown_model")
-        model_key = model_slug.split("-")[1] if "-" in model_slug else model_slug
-        pricing = cost_per_token.get(
-            model_key, cost_per_token["4o"]
-        )  # default to 4o pricing
+        model = metadata.get("model_slug", model)  # default to last used
+        pricing = cost_per_token.get(model, {"input": 0, "output": 0})
 
         # Calculate token count and cost
         content_length = len(content[0])
@@ -113,10 +113,10 @@ def extract_message_details(
                 "conv_id": conversation.get("id", "unknown_id"),
                 "msg_id": message.get("id", "unknown_msg_id"),
                 "create_time": message.get("create_time", 0),
-                "role": role,
+                "role": f"{role}:{model}" if role == "assistant" else role,
                 "content": content[0],
                 "num_tokens": num_tokens,
-                "model_slug": model_slug,
+                "model": model,
                 "cost": cost,
             }
         )
