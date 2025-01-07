@@ -1,4 +1,6 @@
 from pathlib import Path
+import datetime
+from typing import Optional
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -9,7 +11,7 @@ import click
 from .extract import process_zip
 
 
-def plot_data(all_messages):
+def plot_data(all_messages, since: datetime.date = None):
     """
     Plots a stacked bar chart showing token counts by date and role, with enhanced formatting.
     Annotates each bar with the total cost and includes the total cost in the title.
@@ -23,6 +25,10 @@ def plot_data(all_messages):
 
     # Convert timestamps to dates
     df["date"] = pd.to_datetime(df["create_time"], unit="s").dt.date
+
+    # If "since" specified, filter
+    if since:
+        df = df.loc[df["date"] >= since]
 
     # Calculate total cost per message
     df["total_cost"] = df["cost"]
@@ -80,6 +86,29 @@ def plot_data(all_messages):
     logger.info("Plot displayed successfully")
 
 
+def parse_timedelta(arg):
+    """
+    Parse a string like "days=7" or "weeks=4" into a timedelta object.
+
+    Args:
+        arg (str): String representing the timedelta (e.g., "days=7", "weeks=4").
+
+    Returns:
+        timedelta: A timedelta object representing the parsed duration.
+
+    Raises:
+        ValueError: If the input string is not in the correct format.
+    """
+    try:
+        # Split the string into key and value
+        key, value = arg.split("=")
+        value = int(value)  # Convert the value to an integer
+        # Create and return the corresponding timedelta
+        return datetime.timedelta(**{key: value})
+    except (ValueError, TypeError) as e:
+        raise ValueError(f"Invalid format for timedelta argument: {arg}") from e
+
+
 @click.command()
 @click.argument(
     "zip_path", type=click.Path(exists=True, dir_okay=False, path_type=Path)
@@ -91,7 +120,12 @@ def plot_data(all_messages):
     help="Path to extract conversations.json",
     show_default=True,
 )
-def main(zip_path: Path, extract_to: Path):
+@click.option(
+    "--since",
+    default=None,
+    help="Show data since timedelta (days|weeks=*)",
+)
+def main(zip_path: Path, extract_to: Path, since: Optional[str]):
     """
     Process a ZIP file and plot token counts.
 
@@ -100,12 +134,22 @@ def main(zip_path: Path, extract_to: Path):
     # Configure logging
     logger.info(f"Starting script with ZIP_PATH={zip_path} and EXTRACT_TO={extract_to}")
 
+    if since:
+        try:
+            units, values = since.split("=")
+            since = datetime.date.today() - datetime.timedelta(**{units: float(values)})
+            click.echo(f"Displaying stats from {since}")
+        except ValueError as e:
+            click.echo(f"Error: {e}")
+    else:
+        click.echo("No cutoff date provided. Displaying all stats.")
+
     try:
         # Process the ZIP file and get messages
         all_messages = process_zip(zip_path, extract_to)
 
         # Plot the data
-        plot_data(all_messages)
+        plot_data(all_messages, since=since)
 
     except Exception as e:
         logger.error(f"An error occurred: {e}")
