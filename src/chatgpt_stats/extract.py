@@ -94,7 +94,9 @@ def extract_message_details(
         metadata = message.get("metadata", {})
         model_slug = metadata.get("model_slug", "unknown_model")
         model_key = model_slug.split("-")[1] if "-" in model_slug else model_slug
-        pricing = cost_per_token.get(model_key, {"input": 0, "output": 0})
+        pricing = cost_per_token.get(
+            model_key, cost_per_token["4o"]
+        )  # default to 4o pricing
 
         # Calculate token count and cost
         content_length = len(content[0])
@@ -110,7 +112,7 @@ def extract_message_details(
             {
                 "conv_id": conversation.get("id", "unknown_id"),
                 "msg_id": message.get("id", "unknown_msg_id"),
-                "create_time": conversation.get("create_time", 0),
+                "create_time": message.get("create_time", 0),
                 "role": role,
                 "content": content[0],
                 "num_tokens": num_tokens,
@@ -180,4 +182,5 @@ def process_zip(zip_path, extract_to):
     logger.info("Processing conversations...")
     all_messages = process_conversations(data, chars_per_token=chars_per_token)
     logger.info(f"Processed {len(all_messages)} messages")
+
     return all_messages
