@@ -10,7 +10,7 @@ the relevant conversation data, calculates token usage for each message, and gen
 insightful visualizations. The primary output is a stacked bar chart that displays token usage 
 over time, categorized by roles (e.g., user, assistant).
 
-This tool is designed to help users gain insights into their ChatGPT usage patterns.
+![Example plot](usage.png)
 
 ## Features
 
