@@ -16,7 +16,6 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent"
 ]
-
 dependencies = [
     "pandas",
     "matplotlib",
@@ -26,3 +25,7 @@ dependencies = [
 
 [project.scripts]
 chatgpt-stats = "chatgpt_stats.plot:main"
+
+[build-system]
+requires = ["flit_core >=3.2"]
+build-backend = "flit_core.buildapi"

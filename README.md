@@ -27,17 +27,25 @@ over time, categorized by roles (e.g., user, assistant).
     cd chatgpt-stats
     ```
 
-2. Install the required dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
+2.	Ensure you have [Flit](https://flit.pypa.io/) installed. If Flit is not installed, you can install it using pip:
+   ```bash
+   pip install flit
+   ```
+
+3. Install the package:
+   ```bash
+   flit install
+
+   # or to install as editable
+   flit install --deps develop --symlink
+   ```
 
 ## Usage
 
 Run the tool from the command line:
 
 ```bash
-python -m src.chatgpt_stats.plot <ZIP_PATH> [--extract-to <EXTRACT_PATH>]
+chatgpt-stats <ZIP_PATH> [--extract-to <EXTRACT_PATH>]
 ```
 
 ### Arguments
